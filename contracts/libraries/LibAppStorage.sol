@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.24;
 
 library LibAppStorage {
 
@@ -45,15 +45,15 @@ library LibAppStorage {
         mapping(uint256 => AuctionPool) auctionPools;
     }
 
-    function appStorage()
-        internal
-        pure
-        returns (Layout storage a)
-    {
-        bytes32 position = APP_STORAGE_POSITION;
-        assembly {
-            a.slot := position
-        }
-    }
+    // function appStorage()
+    //     internal
+    //     pure
+    //     returns (Layout storage a)
+    // {
+    //     bytes32 position = APP_STORAGE_POSITION;
+    //     assembly {
+    //         a.slot := position
+    //     }
+    // }
 
 }

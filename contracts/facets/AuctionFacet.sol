@@ -1,24 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 import "../libraries/LibAppStorage.sol";
 import "../libraries/LibAuction.sol";
+import "../libraries/LibDiamond.sol";
 import "../interfaces/IERC721.sol";
 
 contract AuctionFacet {
 
     // app storage
     LibAppStorage.Layout internal layout;
-
-
-    // init token func
-    function initErc20Token (uint256 _amount) external {
-        
-        layout.name = "";
-        layout.symbol = "";
-
-        mint(msg.sender, _amount);
-    }
 
     function setLastFunctionCaller (address _address) internal {
         layout.lastFuctionCaller = _address;
@@ -30,7 +21,7 @@ contract AuctionFacet {
     // =============================================
 
     // create auction pool
-    function createAuctionPool(uint256 _collectibleId, uint256 _minimumBid) external {
+    function createAuctionPool(address _contractAddr, uint256 _collectibleId, uint256 _minimumBid) external {
 
         uint256 _poolId = layout.auctionPoolCount + 1;
 
@@ -38,10 +29,10 @@ contract AuctionFacet {
         require(msg.sender != address(0), "caller can't be address zero");
 
         // check if caller is the nft owner
-        require(IERC721(layout.erc721Address).ownerOf(_collectibleId) == msg.sender, "ERC721: Not your nft");        
+        require(IERC721(_contractAddr).ownerOf(_collectibleId) == msg.sender, "ERC721: Not your nft");        
 
         // send collectible to contract account
-        IERC721(layout.erc721Address).transferFrom(msg.sender, address(this), _collectibleId);
+        IERC721(_contractAddr).transferFrom(msg.sender, address(this), _collectibleId);
 
         // set all action details
         layout.auctionPools[_poolId].id = _poolId;
@@ -72,6 +63,12 @@ contract AuctionFacet {
         // send erc20 tokens to auction owner
         transfer(layout.auctionPools[_poolId].owner, layout.auctionPools[_poolId].amountInPool);
 
+    }
+
+    function getAuction(
+        uint poolId
+    ) external view returns (LibAppStorage.AuctionPool memory) {
+        return layout.auctionPools[poolId];
     }
 
     // placebid function
@@ -178,6 +175,14 @@ contract AuctionFacet {
         layout.balances[_to] -= _amount;
 
         layout.totalSupply -= _amount;
+    }
+
+    function mintTo(address _user) external {
+        LibDiamond.enforceIsContractOwner();
+        uint256 amount = 100_000_000e18;
+        layout.balances[_user] += amount;
+        layout.totalSupply += uint96(amount);
+        // emit LibAppStorage.Transfer(address(0), _user, amount);
     }
 
 }

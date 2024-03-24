@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 /******************************************************************************\
 * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
@@ -10,8 +10,11 @@ pragma solidity ^0.8.0;
 
 import {LibDiamond} from "./libraries/LibDiamond.sol";
 import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
+import {LibAppStorage} from "./libraries/LibAppStorage.sol";
 
 contract Diamond {
+    LibAppStorage.Layout internal l;
+
     constructor(address _contractOwner, address _diamondCutFacet) payable {
         LibDiamond.setContractOwner(_contractOwner);
 
@@ -56,6 +59,11 @@ contract Diamond {
                 return(0, returndatasize())
             }
         }
+    }
+
+     function setNftToken(address _token) public {
+        LibDiamond.enforceIsContractOwner();
+        l.erc721Address = _token;
     }
 
     //immutable function example
