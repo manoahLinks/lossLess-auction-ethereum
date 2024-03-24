@@ -84,7 +84,6 @@ contract DiamondDeployer is Test, IDiamondCut {
 
     }
 
-
     function testCreateAuction () public {
         switchSigner(A);
         erc721Token.mint();
@@ -92,6 +91,19 @@ contract DiamondDeployer is Test, IDiamondCut {
         auction.createAuctionPool(address(erc721Token), 1, 1e18);
         LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
         assertEq(new_auction.id, 1);
+        assertEq(new_auction.owner, A);
+    }
+
+    function testPlaceBid () public {
+        switchSigner(A);
+        erc721Token.mint();
+        erc721Token.approve(address(diamond), 1);
+        auction.createAuctionPool(address(erc721Token), 1, 1e18);
+        switchSigner(B);
+        auction.approve(address(diamond), 2e18);
+        auction.placeBid(1, 2e18);
+        LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
+        assertEq(new_auction.currentHighestBidder, B);
     }
 
 

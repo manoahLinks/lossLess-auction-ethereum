@@ -150,7 +150,7 @@ contract AuctionFacet {
     }
 
     // function approve
-    function approve (address _spender, uint256 _amount) internal {
+    function approve (address _spender, uint256 _amount) external {
 
          // checks
          require(msg.sender != address(0), "caller cant be address zero");
