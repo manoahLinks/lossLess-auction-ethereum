@@ -92,6 +92,31 @@ contract DiamondDeployer is Test, IDiamondCut {
         LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
         assertEq(new_auction.id, 1);
         assertEq(new_auction.owner, A);
+        assertEq(new_auction.minimumBid, 1e18);
+    }
+
+    function testCloseAuction () public {
+        switchSigner(A);
+        erc721Token.mint();
+        erc721Token.approve(address(diamond), 1);
+        auction.createAuctionPool(1, 1e18);
+        switchSigner(B);
+        auction.approve(address(diamond), 2e18);
+        auction.placeBid(1, 2e18);
+        switchSigner(A);
+        auction.closeAuctionPool(1);
+        LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
+        assertEq(new_auction.isOpen, false);
+    }
+
+    function testOnlyOwnerCanClosePool () public {
+        switchSigner(A);
+        erc721Token.mint();
+        erc721Token.approve(address(diamond), 1);
+        auction.createAuctionPool(1, 1e18);
+        switchSigner(B);
+        vm.expectRevert("You are not pool owner");
+        auction.closeAuctionPool(1);
     }
 
     function testPlaceBid () public {
@@ -104,6 +129,18 @@ contract DiamondDeployer is Test, IDiamondCut {
         auction.placeBid(1, 2e18);
         LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
         assertEq(new_auction.currentHighestBidder, B);
+    }
+
+    function testLessThanMinBid () public {
+        switchSigner(A);
+        erc721Token.mint();
+        erc721Token.approve(address(diamond), 1);
+        auction.createAuctionPool(1, 2e18);
+        switchSigner(B);
+        auction.approve(address(diamond), 2e18);
+        vm.expectRevert("Auction: Amount less than minimum highest bid");
+        auction.placeBid(1, 1e18);
+        
     }
 
       function testRevertNotERC721TokenOwner() public {

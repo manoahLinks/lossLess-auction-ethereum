@@ -106,7 +106,7 @@ contract AuctionFacet {
         // check bal of bidder in erc20
         require(layout.balances[msg.sender] >= _amount, "ERC20: Not enough balance");
 
-        require(_amount > layout.auctionPools[_poolId].minimumBid, "Auction: Amount less than current highest bid");
+        require(_amount > layout.auctionPools[_poolId].minimumBid, "Auction: Amount less than minimum highest bid");
 
         // check if amount if higher than the last bidder and update current highest bidder
         require(_amount > layout.auctionPools[_poolId].currentHighestBid, "Auction: Amount less than current highest bid");
