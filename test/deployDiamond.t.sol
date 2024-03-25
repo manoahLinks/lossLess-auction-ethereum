@@ -67,7 +67,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         //upgrade diamond
         IDiamondCut(address(diamond)).diamondCut(cut, address(0x0), "");
 
-        // diamond.setNftToken(erc721Token);
+        diamond.setNftToken(address(erc721Token));
 
         A = mkaddr("staker a");
         B = mkaddr("staker b");
@@ -88,7 +88,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         switchSigner(A);
         erc721Token.mint();
         erc721Token.approve(address(diamond), 1);
-        auction.createAuctionPool(address(erc721Token), 1, 1e18);
+        auction.createAuctionPool(1, 1e18);
         LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
         assertEq(new_auction.id, 1);
         assertEq(new_auction.owner, A);
@@ -98,12 +98,29 @@ contract DiamondDeployer is Test, IDiamondCut {
         switchSigner(A);
         erc721Token.mint();
         erc721Token.approve(address(diamond), 1);
-        auction.createAuctionPool(address(erc721Token), 1, 1e18);
+        auction.createAuctionPool(1, 1e18);
         switchSigner(B);
         auction.approve(address(diamond), 2e18);
         auction.placeBid(1, 2e18);
         LibAppStorage.AuctionPool memory new_auction = auction.getAuction(1);
         assertEq(new_auction.currentHighestBidder, B);
+    }
+
+      function testRevertNotERC721TokenOwner() public {
+        switchSigner(A);
+        erc721Token.mint();
+        switchSigner(B);
+        vm.expectRevert("ERC721: Not your nft");
+        auction.createAuctionPool(1, 1e18);
+    }
+
+     function testRevertIfInsufficientTokenBalance() public {
+        switchSigner(C);
+        erc721Token.mint();
+        erc721Token.approve(address(diamond), 1);
+        auction.createAuctionPool(1, 1e18);
+        vm.expectRevert("ERC20: Not enough balance");
+        auction.placeBid(1, 1e18);
     }
 
 

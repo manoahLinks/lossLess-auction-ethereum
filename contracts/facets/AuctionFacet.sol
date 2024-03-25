@@ -15,13 +15,34 @@ contract AuctionFacet {
         layout.lastFuctionCaller = _address;
     }
 
+    function calculatePercentage(uint amount) internal pure returns (uint) {
+        return (10 * amount) / 100;
+    }
+
+    function distributeTenPercent (uint256 _amount, address _outBidder, address _lastInteractor) internal {
+        uint256 burnAmount = LibAuction.percentageBasedOnAmount(_amount, 2); // 2%
+        uint256 dao = LibAuction.percentageBasedOnAmount(_amount, 2); // 2%
+        uint256 outBidder = LibAuction.percentageBasedOnAmount(_amount, 3); // 3%
+        uint256 team = LibAuction.percentageBasedOnAmount(_amount, 2); // 2%
+        uint256 lastInteractor = LibAuction.percentageBasedOnAmount(_amount, 1); // 1%
+
+        transferFrom(address(this), _outBidder, outBidder);
+
+        transferFrom(address(this), _lastInteractor, lastInteractor);
+
+        transferFrom(address(this), address(0), burnAmount);
+
+        transferFrom(address(this), address(0xc408235a9A01767d70B41C98d92F2dC7B0d959f4), team);
+
+        transferFrom(address(this), address(0xc408235a9A01767d70B41C98d92F2dC7B0d959f4), dao);
+    }
 
     // =============================================
     //        AUCTION FUNCTIONS
     // =============================================
 
     // create auction pool
-    function createAuctionPool(address _contractAddr, uint256 _collectibleId, uint256 _minimumBid) external {
+    function createAuctionPool(uint256 _collectibleId, uint256 _minimumBid) external {
 
         uint256 _poolId = layout.auctionPoolCount + 1;
 
@@ -29,10 +50,10 @@ contract AuctionFacet {
         require(msg.sender != address(0), "caller can't be address zero");
 
         // check if caller is the nft owner
-        require(IERC721(_contractAddr).ownerOf(_collectibleId) == msg.sender, "ERC721: Not your nft");        
+        require(IERC721(layout.erc721Address).ownerOf(_collectibleId) == msg.sender, "ERC721: Not your nft");        
 
         // send collectible to contract account
-        IERC721(_contractAddr).transferFrom(msg.sender, address(this), _collectibleId);
+        IERC721(layout.erc721Address).transferFrom(msg.sender, address(this), _collectibleId);
 
         // set all action details
         layout.auctionPools[_poolId].id = _poolId;
@@ -89,6 +110,10 @@ contract AuctionFacet {
 
         // check if amount if higher than the last bidder and update current highest bidder
         require(_amount > layout.auctionPools[_poolId].currentHighestBid, "Auction: Amount less than current highest bid");
+
+        uint256 percentCut = calculatePercentage(_amount);
+
+        // distributeTenPercent(percentCut, layout.auctionPools[_poolId].currentHighestBidder, layout.lastFuctionCaller);
 
         // create bid
         transferFrom(msg.sender, address(this), _amount);
